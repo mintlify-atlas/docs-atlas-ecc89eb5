@@ -1,0 +1,96 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Zeal",
+  "projectDescription": "A single-binary structured log query tool with a SQL-like language supporting JSON, logfmt, and plain text formats, plus temporal event correlation.",
+  "theme": "palm",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "installation", "quickstart"]
+          },
+          {
+            "group": "Query Language",
+            "pages": [
+              "query-language/syntax",
+              "query-language/operators",
+              "query-language/temporal-correlation",
+              "query-language/nested-fields"
+            ]
+          },
+          {
+            "group": "Log Formats",
+            "pages": [
+              "log-formats/overview",
+              "log-formats/json",
+              "log-formats/logfmt",
+              "log-formats/plain-text"
+            ]
+          },
+          {
+            "group": "CLI Reference",
+            "pages": [
+              "cli/options",
+              "cli/output-formats",
+              "cli/explain-mode",
+              "cli/follow-mode",
+              "cli/shell-completions"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/incident-investigation",
+              "examples/monitoring-scripting",
+              "examples/multi-source",
+              "examples/piping"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/overview",
+              "contributing/architecture",
+              "contributing/building"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "SQL-like query language: FROM, WHERE, GROUP BY, SHOW",
+    "Temporal correlation: WITHIN 5s OF finds events near other events",
+    "Auto-detects JSON, logfmt, and plain text log formats",
+    "Single static binary, zero dependencies, built in Zig",
+    "Follow mode: real-time tail with live filtering",
+    "Explain mode: shows query execution plan",
+    "Multiple output formats: text, NDJSON, raw",
+    "2–6x faster than jq for structured log queries",
+    "Nested field access with dot notation",
+    "Shell completions for bash, zsh, and fish"
+  ],
+  "publicApiSurface": [
+    "zeal '<query>'",
+    "FROM <source>[, <source>]",
+    "WHERE <expression>",
+    "GROUP BY <field>[, <field>]",
+    "SHOW FIRST|LAST <n> | SHOW COUNT",
+    "WITHIN <duration> OF <expression>",
+    "CONTAINS operator",
+    "MATCHES operator",
+    "AND / OR / NOT boolean logic",
+    "--format text|json|raw",
+    "--follow / -F",
+    "--explain",
+    "--color auto|always|never",
+    "--no-color",
+    "-f / --file <path>"
+  ]
+}
