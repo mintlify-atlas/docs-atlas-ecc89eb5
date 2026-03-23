@@ -1,0 +1,61 @@
+---
+title: "Monitoring and scripting"
+description: "Integrate Zeal into alerting scripts and monitoring workflows."
+---
+
+Because Zeal is a single static binary with machine-readable output modes, it fits naturally into shell scripts, cron jobs, and alerting pipelines. Use `--format raw` to get a bare count or log lines, and `--format json` to produce structured output for downstream tools.
+
+## Count errors for threshold alerting
+
+`SHOW COUNT` with `--format raw` returns just the number — no headers, no decoration. This makes it straightforward to capture in a shell variable and compare against a threshold.
+
+```bash
+ERROR_COUNT=$(zeal --format raw 'FROM /var/log/app.json WHERE level = "error" SHOW COUNT')
+if [ "$ERROR_COUNT" -gt 100 ]; then
+  echo "ALERT: $ERROR_COUNT errors in the last log rotation" | mail -s "Error spike" ops@company.com
+fi
+```
+
+<Note>
+`SHOW COUNT` with `--format raw` returns just the number, making it easy to parse in scripts. No `awk` or `grep` needed to extract the value.
+</Note>
+
+## Real-time alerting with follow mode
+
+Use `--follow` to tail a log file for new entries. Pipe the output to a loop that fires an alert for each match.
+
+```bash
+zeal --follow --format json 'FROM /var/log/app.json WHERE level = "fatal"' | \
+  while read -r line; do
+    curl -X POST "$SLACK_WEBHOOK" -d "{\"text\": \"FATAL: $line\"}"
+  done
+```
+
+The `--follow` flag behaves like `tail -f` but applies your filter before output — only matching entries reach the pipe.
+
+<Tip>
+Combine `--format json` with `jq` to extract specific fields before sending to a webhook:
+
+```bash
+zeal --follow --format json 'FROM /var/log/app.json WHERE level = "fatal"' | \
+  jq -c '{text: ("FATAL: " + .message), service: .service}' | \
+  while read -r payload; do
+    curl -X POST "$SLACK_WEBHOOK" -d "$payload"
+  done
+```
+</Tip>
+
+## Cron job — hourly error counts
+
+Run Zeal on a schedule to build a time-series log of error volume. The `--format raw` output appends a clean integer on each run.
+
+```bash
+# Run every hour via cron
+0 * * * * /usr/local/bin/zeal --format raw 'FROM /var/log/app.json WHERE level = "error" SHOW COUNT' >> /var/log/error-counts.log
+```
+
+Each line in `/var/log/error-counts.log` will be a single number. Pair this with a timestamp to build a simple trend log:
+
+```bash
+0 * * * * echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $(zeal --format raw 'FROM /var/log/app.json WHERE level = "error" SHOW COUNT')" >> /var/log/error-counts.log
+```

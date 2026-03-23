@@ -1,0 +1,54 @@
+---
+title: "Follow mode"
+description: "Tail a log file in real time with live filtering using --follow or -F."
+---
+
+Follow mode tails a log file for new entries, applying your query filter to each new line as it arrives — like `tail -f`, but with Zeal's full query language.
+
+```bash
+zeal --follow '<query>'
+zeal -F '<query>'       # short flag
+```
+
+Press `Ctrl+C` to stop.
+
+## Examples
+
+```bash
+# Watch for fatal errors in real time
+zeal --follow 'FROM /var/log/app.log WHERE level = "fatal"'
+
+# Short flag -F
+zeal -F 'FROM /var/log/app.log WHERE level = "error"'
+
+# Use -f to specify the file separately from the query
+zeal -f /var/log/app.log --follow 'WHERE level = "error"'
+```
+
+## Combining with JSON output
+
+Pair `--follow` with `--format json` to stream matching entries to downstream tools:
+
+```bash
+# Send fatal errors to a Slack webhook
+zeal --follow --format json 'FROM /var/log/app.json WHERE level = "fatal"' | \
+  while read -r line; do
+    curl -X POST "$SLACK_WEBHOOK" -d "{\"text\": \"FATAL: $line\"}"
+  done
+```
+
+## Behavior
+
+**Log rotation.** Follow mode detects when a file is truncated (a common log rotation pattern) and resets its read position to the start of the new file. Entries written to the rotated file before the reset may be missed, but the tool will not hang or produce errors.
+
+**Existing entries.** When follow mode starts, Zeal first processes all existing entries in the file, then begins tailing for new ones.
+
+**Temporal correlation in follow mode.** `WITHIN ... OF` queries are supported in follow mode, but the temporal correlation is applied only against the condition clause — not across a full historical window. New entries are matched individually against the condition expression.
+
+**Polling interval.** Zeal polls the file for new content every 200 ms.
+
+## Limitations
+
+<Warning>
+  `--follow` requires a file source. It is not supported with stdin or multiple sources. Use a `FROM` clause or a single `-f` flag to specify the file.
+</Warning>

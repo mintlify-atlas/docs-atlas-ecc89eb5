@@ -1,0 +1,44 @@
+---
+title: "Plain text logs"
+description: "Query plain text log files including syslog, Apache access logs, and any line-based format."
+---
+
+Plain text is the fallback format for any file that does not look like JSON or logfmt. This covers syslog, Apache/nginx access logs, Java stack traces, and any other unstructured line-based output.
+
+## Detection
+
+A file is parsed as plain text when the first non-empty line does not start with `{` and does not contain at least two `key=value` pairs.
+
+Syslog lines that begin with a month abbreviation (e.g., `Jan`) or an RFC 5424 priority tag (e.g., `<13>`) are recognized as a syslog variant and receive the same plain-text treatment.
+
+## Example log lines
+
+```
+2024-01-15 10:30:06 ERROR Connection timeout for request abc123
+Jan 15 10:30:06 myhost myapp[1234]: ERROR Connection timeout
+192.168.1.1 - - [15/Jan/2024:10:30:06 +0000] "GET /api/users HTTP/1.1" 500 1234
+```
+
+## Query examples
+
+`CONTAINS` is the most reliable operator for plain text because the entire line is available as `message`:
+
+```bash
+zeal 'FROM /var/log/syslog WHERE message CONTAINS "timeout"'
+zeal 'FROM /var/log/apache/access.log WHERE message CONTAINS "500"'
+zeal 'FROM /var/log/syslog WHERE level = "error"'
+```
+
+## Level and timestamp extraction
+
+For plain text lines, Zeal attempts to detect `level` and `timestamp` automatically using common patterns:
+
+- `[ERROR]` / `[WARN]` bracketed tokens
+- Bare level words: `ERROR`, `WARN`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `FATAL`, `CRITICAL`
+- ISO 8601 / space-separated timestamps at the start of the line: `2024-01-15T10:30:06Z` or `2024-01-15 10:30:06`
+
+When a level word is found, `WHERE level = "error"` works as expected. When it is not found, `level` is reported as unknown and equality filters on it will not match.
+
+<Note>
+  Field extraction for plain text is best-effort. `CONTAINS` searches the full raw line and is always reliable. Structured field filters (`=`, `>=`, etc.) depend on successful pattern detection.
+</Note>

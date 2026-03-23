@@ -1,0 +1,62 @@
+---
+title: "Building from source"
+description: "Build, test, and benchmark Zeal locally using Zig 0.16+."
+---
+
+## Prerequisites
+
+You need **Zig 0.16 or later** (nightly). Download it from [ziglang.org/download](https://ziglang.org/download/).
+
+<Note>
+  Zig 0.16 is a nightly release. For reproducible builds, use the exact compiler version pinned in the [CI configuration](https://github.com/aryanjha256/zeal/blob/main/.github/workflows/ci.yml).
+</Note>
+
+## Build commands
+
+```bash
+# Debug build (fast compile, includes assertions)
+zig build
+
+# Run all tests (70+ tests)
+zig build test
+
+# Run with a query
+zig build run -- 'FROM testdata/app.json WHERE level = "error"'
+
+# Optimized release build (~5MB static binary)
+zig build -Doptimize=ReleaseFast
+```
+
+## Installing the built binary
+
+After a release build, copy the binary to your `PATH`:
+
+```bash
+sudo cp zig-out/bin/zeal /usr/local/bin/
+```
+
+## Running benchmarks
+
+Benchmarks require the optimized build. The `bench.sh` script generates a synthetic log file and times several query patterns:
+
+```bash
+zig build -Doptimize=ReleaseFast
+./bench/bench.sh 10000
+```
+
+The argument is the number of log entries to generate. Pass a larger number for a more stable measurement.
+
+## Cross-compilation
+
+Zig supports cross-compilation out of the box — no cross-compiler toolchain required. The CI pipeline builds release binaries for four targets:
+
+- Linux x86\_64
+- Linux aarch64
+- macOS x86\_64
+- macOS aarch64
+
+To cross-compile locally, pass `-Dtarget=` to `zig build`:
+
+```bash
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-linux
+```

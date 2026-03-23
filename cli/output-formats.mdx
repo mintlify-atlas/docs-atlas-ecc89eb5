@@ -1,0 +1,75 @@
+---
+title: "Output formats"
+description: "Control how Zeal displays results: human-readable text, NDJSON, or raw log lines."
+---
+
+Zeal supports three output formats, selected with `--format <fmt>`.
+
+## text (default)
+
+Human-readable output with ANSI colors. Each entry is formatted with the log level, timestamp, message, and any extra fields. A summary line shows match counts at the end.
+
+```bash
+zeal 'FROM app.json WHERE level = "error"'
+```
+
+This is the default — you don't need to pass `--format text` explicitly.
+
+## json
+
+Outputs one JSON object per matching log entry (NDJSON format). No headers, footers, or decoration — just a stream of JSON objects, one per line.
+
+```bash
+zeal --format json 'FROM app.json WHERE level = "error"'
+# Output: {"level":"error","message":"timeout","timestamp":"2024-01-15T10:30:06Z","line":42}
+```
+
+This format is designed for piping to `jq`, scripts, alerting pipelines, and any other tool that consumes structured data:
+
+```bash
+# Extract request IDs from error entries
+zeal --format json 'FROM app.json WHERE level = "error"' | jq '.request_id'
+
+# Count errors per minute with jq
+zeal --format json 'FROM app.json WHERE level = "error"' | jq -r '.timestamp' | cut -c1-16 | sort | uniq -c
+```
+
+Colors are automatically disabled in JSON mode regardless of `--color` setting.
+
+## raw
+
+Outputs the original log lines with zero decoration — no formatting, no colors, no summary. Each matched line is printed exactly as it appeared in the source file.
+
+```bash
+zeal --format raw 'FROM app.json WHERE level = "error"'
+```
+
+Use `raw` when you need to feed matched lines to another tool that expects the original log format:
+
+```bash
+# Re-process matched lines with another log tool
+zeal --format raw 'FROM app.json WHERE level = "error"' | mylogtool --parse
+```
+
+## When to use each format
+
+| Format | Best for |
+|---|---|
+| `text` | Interactive terminal use, human reading |
+| `json` | Piping to `jq`, scripts, alerting systems |
+| `raw` | Feeding matched lines to tools that expect the original format |
+
+## Color control
+
+Color output applies only to `text` format. In `auto` mode (the default), Zeal enables colors when stdout is a TTY and disables them when piping.
+
+```bash
+--no-color        # Disable colors
+--color never     # Same effect
+--color always    # Force colors even when piping
+--color auto      # Auto-detect TTY (default)
+```
+
+<Note>
+  `--color always` forces ANSI escape codes even when stdout is not a terminal. Use this if a downstream tool or viewer supports color but Zeal's TTY detection returns false.
+</Note>

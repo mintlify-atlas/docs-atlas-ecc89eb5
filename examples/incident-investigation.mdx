@@ -1,0 +1,82 @@
+---
+title: "Incident investigation"
+description: "Use Zeal to quickly diagnose outages — find errors, trace requests, and correlate events."
+---
+
+During an incident, the goal is to understand what happened and when as fast as possible. Zeal's query language is designed for exactly this: filter by field, count matches, trace a single request, and correlate events across time — all with a single command.
+
+## Finding errors during an outage
+
+Start by pulling the most recent errors and fatals to see what the system was reporting at the time.
+
+```bash
+# Show the most recent 50 errors or fatals
+zeal 'FROM /var/log/app.json WHERE level = "error" OR level = "fatal" SHOW LAST 50'
+
+# Count how many errors occurred
+zeal 'FROM /var/log/app.json WHERE level = "error" SHOW COUNT'
+```
+
+Use `SHOW COUNT` first to understand scale. If you're seeing thousands of errors, `SHOW LAST 50` narrows it to the tail end of the incident.
+
+## Temporal correlation — were there warnings before errors?
+
+The most common root-cause pattern: a warning fires, goes unnoticed, and errors follow seconds later. `WITHIN...OF` surfaces this connection directly.
+
+```bash
+zeal 'FROM /var/log/app.json WHERE level = "error" WITHIN 30s OF level = "warn"'
+```
+
+This returns only error entries that occurred within 30 seconds of a warning entry. Adjust the window based on how your system behaves — use `5s` for fast services, `2m` for slower background jobs.
+
+<Tip>
+Pair `WITHIN...OF` with `GROUP BY` to see which services or request IDs were affected:
+
+```bash
+zeal 'FROM /var/log/app.json WHERE level = "error" WITHIN 30s OF level = "warn" GROUP BY service'
+```
+</Tip>
+
+## Tracing a single request
+
+Once you have a suspect `request_id` from an error entry, pull every log line associated with it to reconstruct the full request lifecycle.
+
+```bash
+zeal 'FROM /var/log/app.json WHERE request_id = "abc-123"'
+```
+
+This uses exact-match filtering. Replace `request_id` with whatever correlation field your service uses — `trace_id`, `correlation_id`, `job_id`, and so on.
+
+## Find all 5xx errors grouped by endpoint
+
+When errors are widespread, grouping by endpoint tells you which paths are failing.
+
+```bash
+zeal 'FROM /var/log/app.json WHERE status >= 500 GROUP BY path'
+```
+
+The output shows each distinct `path` value alongside its matching entries, making it straightforward to identify the most-affected endpoints.
+
+## Database errors near high latency
+
+Database problems often manifest as latency spikes before explicit error messages appear. Use temporal correlation to connect the two signals.
+
+```bash
+zeal 'FROM app.json WHERE message CONTAINS "db error" WITHIN 2s OF latency_ms >= 1000'
+```
+
+This finds database error entries that occurred within 2 seconds of a request with `latency_ms >= 1000`. Adjust the threshold and window to match your SLOs.
+
+## Deployment-related issues
+
+If errors spiked after a deploy, confirm the timing with a temporal query.
+
+```bash
+zeal 'FROM app.json WHERE level = "error" WITHIN 1m OF message CONTAINS "deployed"'
+```
+
+This returns errors logged within one minute of any entry containing "deployed" — confirming or ruling out the deploy as the cause.
+
+<Note>
+Temporal correlation requires a parseable timestamp field. Zeal recognises `timestamp`, `ts`, `time`, and `@timestamp` automatically.
+</Note>

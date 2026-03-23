@@ -1,0 +1,72 @@
+---
+title: "CLI options"
+description: "Complete reference for all Zeal command-line flags and options."
+---
+
+## Usage
+
+```
+zeal '<query>'
+zeal -f <file> [options] '<query>'
+```
+
+## Options
+
+| Flag | Short | Type | Default | Description |
+|---|---|---|---|---|
+| `--help` | `-h` | boolean | false | Show help and exit |
+| `--version` | `-V` | boolean | false | Show version and exit |
+| `--file <path>` | `-f` | string | — | Log file path (repeatable; alternative to `FROM`) |
+| `--format <fmt>` | — | string | `text` | Output format: `text`, `json`, `raw` |
+| `--color <mode>` | — | string | `auto` | Color mode: `auto`, `always`, `never` |
+| `--no-color` | — | boolean | false | Disable color output (same as `--color never`) |
+| `--follow` | `-F` | boolean | false | Tail file for new entries |
+| `--explain` | — | boolean | false | Show query plan without executing |
+
+## Notes
+
+**`-f` / `--file` and `FROM`**
+
+You can specify log sources either in the query itself with a `FROM` clause or with `-f` flags on the command line. Both approaches are equivalent. You can repeat `-f` to query multiple files:
+
+```bash
+# Using FROM in the query
+zeal 'FROM /var/log/app.log WHERE level = "error"'
+
+# Using -f flag (FROM clause is optional)
+zeal -f /var/log/app.log 'WHERE level = "error"'
+
+# Multiple files with -f
+zeal -f app.log -f nginx.log 'WHERE status >= 500'
+```
+
+**Argument order**
+
+Options can appear before or after the query string. The query must be a single positional argument (quote it to prevent shell word-splitting):
+
+```bash
+zeal --format json --no-color 'FROM app.json WHERE level = "error"'
+```
+
+## Examples
+
+```bash
+# Show version
+zeal --version
+
+# Basic query
+zeal 'FROM app.json WHERE level = "error"'
+
+# Specify file with flag, output as NDJSON
+zeal -f app.json --format json 'WHERE level = "error"'
+
+# Disable colors for piping
+zeal --no-color 'FROM app.json WHERE status >= 500'
+
+# Preview the query plan before running
+zeal --explain 'FROM app.json WHERE level = "error" WITHIN 5s OF level = "warn"'
+
+# Follow a log file in real time
+zeal --follow 'FROM /var/log/app.log WHERE level = "fatal"'
+zeal -F 'FROM /var/log/app.log WHERE level = "fatal"'
+```

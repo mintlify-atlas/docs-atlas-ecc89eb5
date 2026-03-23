@@ -1,0 +1,64 @@
+---
+title: "Multi-source queries"
+description: "Query multiple log files in a single Zeal command using FROM or repeated -f flags."
+---
+
+Zeal can read from multiple log files in a single query. This lets you correlate events across services — for example, matching app errors against nginx access logs — without running separate commands and manually comparing output.
+
+## Two ways to specify multiple sources
+
+**Comma-separated in the `FROM` clause:**
+
+```bash
+zeal 'FROM /var/log/app.json, /var/log/nginx.log WHERE status >= 500'
+```
+
+**Repeated `-f` flags:**
+
+```bash
+zeal -f app.log -f nginx.log 'WHERE status >= 500'
+```
+
+Both are equivalent. Use `-f` flags when building commands programmatically or when file paths come from variables.
+
+## Correlate app errors with nginx 5xx responses
+
+A common use case: an error appears in your application logs, but you want to know whether nginx also reported a 5xx for the same request window.
+
+```bash
+zeal 'FROM /var/log/app.json, /var/log/nginx/error.log WHERE status >= 500'
+```
+
+Zeal reads both files, applies the same filter, and returns matching entries from either source. Each result includes a `source` field indicating which file the entry came from.
+
+## Compare error rates across services
+
+To compare error volume between services, run a separate count query for each:
+
+```bash
+zeal 'FROM /var/log/api.json WHERE level = "error" SHOW COUNT'
+zeal 'FROM /var/log/worker.json WHERE level = "error" SHOW COUNT'
+```
+
+For scripting, capture both counts and compare them:
+
+```bash
+API_ERRORS=$(zeal --format raw 'FROM /var/log/api.json WHERE level = "error" SHOW COUNT')
+WORKER_ERRORS=$(zeal --format raw 'FROM /var/log/worker.json WHERE level = "error" SHOW COUNT')
+echo "api: $API_ERRORS  worker: $WORKER_ERRORS"
+```
+
+## Mixing log formats
+
+<Note>
+Each file is parsed with its own format auto-detection. You can mix JSON and logfmt sources in the same query — Zeal detects the format from the first line of each file independently.
+</Note>
+
+For example, this is valid:
+
+```bash
+# app.json is JSON, nginx.log is plain text — both work
+zeal 'FROM /var/log/app.json, /var/log/nginx.log WHERE message CONTAINS "timeout"'
+```
+
+See [Log formats](/log-formats/overview) for the full list of supported formats and how detection works.

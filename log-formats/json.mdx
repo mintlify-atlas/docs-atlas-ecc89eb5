@@ -1,0 +1,57 @@
+---
+title: "JSON logs"
+description: "Query structured JSON log files with full field access, nested fields, and numeric comparisons."
+---
+
+JSON is the richest format Zeal supports. Every top-level key becomes a queryable field, and numeric values support range comparisons.
+
+## Detection
+
+A file is parsed as JSON when the first non-empty line starts with `{`. No file extension is required.
+
+## Example log line
+
+```json
+{"timestamp":"2024-01-15T10:30:06Z","level":"error","message":"Connection timeout","request_id":"abc123","status":500}
+```
+
+## Query examples
+
+```bash
+# Filter by field value
+zeal 'FROM app.json WHERE level = "error"'
+
+# Numeric comparison
+zeal 'FROM app.json WHERE status >= 500'
+
+# Substring search
+zeal 'FROM app.json WHERE message CONTAINS "timeout"'
+
+# Nested field access
+zeal 'FROM app.json WHERE request.headers.host = "api.example.com"'
+
+# Compound filter with GROUP BY
+zeal 'FROM app.json WHERE level = "error" AND status >= 500 GROUP BY path'
+```
+
+## Nested fields
+
+Dot notation gives you access to any depth of nesting. For example, given:
+
+```json
+{"request":{"headers":{"host":"api.example.com"},"method":"GET"},"status":200}
+```
+
+You can filter on `request.headers.host` or `request.method` directly in the `WHERE` clause.
+
+<Tip>
+  See [Nested fields](/query-language/nested-fields) for the full reference on dot-notation field access.
+</Tip>
+
+## Field mapping
+
+Any of the following field names are automatically recognized as the canonical `level`, `message`, and `timestamp` fields:
+
+- `level`, `lvl`, `severity`, `log_level`, `loglevel`
+- `message`, `msg`, `text`, `body`
+- `timestamp`, `ts`, `time`, `t`, `@timestamp`, `datetime`, `date`

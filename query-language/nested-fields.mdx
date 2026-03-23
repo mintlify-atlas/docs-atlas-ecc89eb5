@@ -1,0 +1,59 @@
+---
+title: "Nested fields"
+description: "Access nested JSON fields using dot notation in your WHERE expressions."
+---
+
+JSON logs often contain nested objects. Zeal lets you traverse them using dot notation in any field reference.
+
+```bash
+zeal 'FROM app.json WHERE request.headers.host = "api.example.com"'
+```
+
+## How it works
+
+Given this log entry:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:06Z",
+  "level": "error",
+  "request": {
+    "method": "POST",
+    "path": "/api/users",
+    "headers": {
+      "host": "api.example.com"
+    }
+  },
+  "status": 500
+}
+```
+
+You can reference any field at any depth:
+
+```bash
+# Top-level field
+zeal 'FROM app.json WHERE status = 500'
+
+# One level deep
+zeal 'FROM app.json WHERE request.method = "POST"'
+
+# Two levels deep
+zeal 'FROM app.json WHERE request.headers.host = "api.example.com"'
+```
+
+All the usual operators work with nested fields:
+
+```bash
+# Substring search on a nested field
+zeal 'FROM app.json WHERE request.path CONTAINS "/api/users"'
+
+# Combine nested and top-level conditions
+zeal 'FROM app.json WHERE request.method = "POST" AND status >= 500'
+
+# Group by a nested field
+zeal 'FROM app.json WHERE level = "error" GROUP BY request.method'
+```
+
+<Note>
+Dot notation only applies to JSON-format logs. logfmt and plain text logs have flat field structures — you cannot use dot notation with them.
+</Note>

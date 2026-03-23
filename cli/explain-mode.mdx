@@ -1,0 +1,55 @@
+---
+title: "Explain mode"
+description: "Preview the query execution plan without running the query using --explain."
+---
+
+The `--explain` flag prints the query execution plan and exits without reading any log files or producing results.
+
+```bash
+zeal --explain '<query>'
+```
+
+## Example
+
+```bash
+zeal --explain 'FROM app.json WHERE level = "error" WITHIN 5s OF level = "warn" GROUP BY request_id'
+```
+
+Output:
+
+```
+Query Plan
+
+  1. READ app.json (auto-detect format)
+  2. SCAN all entries
+  3. FILTER condition: level eq "error"
+  4. TEMPORAL find entries WITHIN 5s OF level eq "warn"
+     Strategy: binary search on sorted timestamps
+  5. GROUP BY request_id
+     Strategy: hash aggregation
+  6. OUTPUT text format
+```
+
+Each step maps to a stage in the execution pipeline: reading the source, scanning entries, filtering, applying temporal correlation, grouping, and writing output.
+
+## Use cases
+
+**Verify query syntax before running on large files.** Explain mode parses and validates the query without touching the source files. If your query has a syntax error, you'll see the error immediately.
+
+```bash
+# Catches syntax errors without reading multi-gigabyte log files
+zeal --explain 'FROM /var/log/huge.log WHERE level = "error" AND status >= 500'
+```
+
+**Understand the execution strategy.** The plan shows which strategy Zeal will use for each operation — sequential scan for simple filters, binary search for temporal correlation, hash aggregation for `GROUP BY`. This helps you anticipate performance before running.
+
+**Check that `-f` files are merged correctly.** When combining `-f` flags with a `FROM` clause, the plan shows all sources that will be read:
+
+```bash
+zeal --explain -f app.log -f nginx.log 'WHERE status >= 500'
+# Shows: READ app.log, READ nginx.log
+```
+
+<Tip>
+  Run `--explain` before executing any query against multi-gigabyte log files. It validates your query syntax and lets you review the plan at no cost.
+</Tip>

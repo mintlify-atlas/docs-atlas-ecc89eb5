@@ -1,97 +1,82 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Zeal — Structured Log Query Language"
+description: "Like jq, but for logs. Query JSON, logfmt, and plain text log files with a SQL-like language. Zero dependencies. Single binary."
 ---
 
-## Setting up
-
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get the single static binary running on Linux or macOS in under a minute.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Write your first query and filter logs in seconds.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Query Language" icon="code" href="/query-language/syntax">
+    Learn the full SQL-like syntax: FROM, WHERE, GROUP BY, SHOW.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Temporal Correlation" icon="clock" href="/query-language/temporal-correlation">
+    The killer feature — find events that happen near other events in time.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is Zeal?
 
-Everything you need to create world-class documentation.
+Zeal is a single static binary that lets you query log files with a SQL-like language. It auto-detects JSON, logfmt, and plain text formats, has zero dependencies, and is built in Zig for speed.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+```bash
+# Find all errors instantly
+zeal 'FROM /var/log/app.json WHERE level = "error"'
 
-## Need inspiration?
+# The killer feature: find errors within 5s of a warning
+zeal 'FROM /var/log/app.json WHERE level = "error" WITHIN 5s OF level = "warn"'
+```
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Why Zeal?
+
+<CardGroup cols={3}>
+  <Card title="grep" icon="magnifying-glass">
+    Can't filter by field values, do numeric comparisons, or correlate events.
+  </Card>
+  <Card title="jq" icon="brackets-curly">
+    Great for JSON but can't handle logfmt or plain text, and has no temporal logic.
+  </Card>
+  <Card title="zeal" icon="bolt">
+    A single consistent query language across **all** log formats — plus temporal correlation.
+  </Card>
+</CardGroup>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="SQL-like syntax" icon="table">
+    Use `FROM`, `WHERE`, `GROUP BY`, and `SHOW` just like SQL — no new paradigm to learn.
+  </Card>
+  <Card title="Temporal correlation" icon="timeline">
+    `WITHIN 5s OF` finds events that happened near other events. Powered by binary search.
+  </Card>
+  <Card title="Auto-format detection" icon="wand-magic-sparkles">
+    JSON, logfmt, and plain text detected automatically from the first line of your file.
+  </Card>
+  <Card title="2–6x faster than jq" icon="gauge-high">
+    Built in Zig with zero-copy parsing. Benchmarked at 5ms for 10,000 JSON log entries.
+  </Card>
+  <Card title="Follow mode" icon="rotate">
+    `--follow` tails a file with live filtering — like `tail -f`, but smarter.
+  </Card>
+  <Card title="Multiple output formats" icon="file-export">
+    Human-readable text with ANSI colors, NDJSON for piping, or raw original lines.
+  </Card>
+</CardGroup>
+
+## Performance
+
+Benchmarked on 10,000 JSON log entries:
+
+| Query | zeal | jq | grep |
+|---|---|---|---|
+| Simple filter (`level = "error"`) | **5ms** | 16ms | 2ms |
+| Numeric (`status >= 500`) | **6ms** | 16ms | — |
+| Compound (`level = "error" AND status >= 500`) | **5ms** | 15ms | — |
+| `CONTAINS "timeout"` | **5ms** | 32ms | 2ms |
+| Count | **6ms** | 16ms | 2ms |
+
+Zeal is **2–6x faster than jq** for structured queries while supporting all log formats, not just JSON.

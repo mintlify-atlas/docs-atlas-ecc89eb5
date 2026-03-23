@@ -1,0 +1,103 @@
+---
+title: "Installation"
+description: "Install Zeal on Linux or macOS using pre-built binaries or build from source."
+---
+
+## Pre-built binaries
+
+Pre-built binaries are available for Linux (x86\_64) and macOS (Apple Silicon). Download, extract, and move the binary onto your `PATH`.
+
+<Steps>
+  <Step title="Download and install">
+    <CodeGroup>
+
+```bash Linux (x86_64)
+curl -Lo zeal.tar.gz https://github.com/aryanjha256/zeal/releases/latest/download/zeal-x86_64-linux.tar.gz
+tar xzf zeal.tar.gz
+sudo mv zeal-x86_64-linux /usr/local/bin/zeal
+```
+
+```bash macOS (Apple Silicon)
+curl -Lo zeal.tar.gz https://github.com/aryanjha256/zeal/releases/latest/download/zeal-aarch64-macos.tar.gz
+tar xzf zeal.tar.gz
+sudo mv zeal-aarch64-macos /usr/local/bin/zeal
+```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Verify the installation">
+    ```bash
+    zeal --version
+    ```
+
+    You should see output like `zeal 0.1.0`.
+  </Step>
+</Steps>
+
+## Build from source
+
+Building from source requires [Zig 0.16 or later](https://ziglang.org/download/).
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/aryanjha256/zeal.git
+    cd zeal
+    ```
+  </Step>
+
+  <Step title="Build the optimized binary">
+    ```bash
+    zig build -Doptimize=ReleaseFast
+    ```
+
+    This produces a ~5 MB static binary at `zig-out/bin/zeal`.
+  </Step>
+
+  <Step title="Install the binary">
+    ```bash
+    sudo cp zig-out/bin/zeal /usr/local/bin/
+    ```
+  </Step>
+
+  <Step title="Verify the installation">
+    ```bash
+    zeal --version
+    ```
+  </Step>
+</Steps>
+
+## Shell completions
+
+Completions are bundled in the repository under `completions/`. After installing Zeal, copy the file for your shell.
+
+<Note>
+  If you installed from a pre-built binary, clone the repository first to get the completions directory, or download the archive from the [Releases page](https://github.com/aryanjha256/zeal/releases).
+</Note>
+
+<Tabs>
+  <Tab title="Bash">
+    ```bash
+    sudo cp completions/zeal.bash /etc/bash_completion.d/zeal
+    ```
+
+    Reload your shell or run `source /etc/bash_completion.d/zeal` to activate immediately.
+  </Tab>
+
+  <Tab title="Zsh">
+    ```bash
+    sudo cp completions/zeal.zsh /usr/local/share/zsh/site-functions/_zeal
+    ```
+
+    Run `compinit` or open a new terminal session to activate.
+  </Tab>
+
+  <Tab title="Fish">
+    ```bash
+    cp completions/zeal.fish ~/.config/fish/completions/
+    ```
+
+    Fish picks up completions automatically — no extra step required.
+  </Tab>
+</Tabs>

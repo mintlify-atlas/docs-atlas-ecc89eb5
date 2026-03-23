@@ -1,0 +1,72 @@
+---
+title: "Temporal correlation"
+description: "Find log events that happened near other events in time using WITHIN...OF."
+---
+
+Temporal correlation is Zeal's standout feature. It lets you find log entries that occurred close in time to other entries — without joining files, writing scripts, or manually scanning timestamps.
+
+A common scenario: you see a burst of errors in production, but the root cause was a warning logged 3 seconds earlier. A plain `WHERE level = "error"` query won't surface that connection. `WITHIN...OF` does.
+
+## Syntax
+
+```
+WHERE <condition> WITHIN <duration> OF <anchor>
+```
+
+- **condition** — the expression the returned entry must satisfy
+- **duration** — how far apart the two events can be (in either direction)
+- **anchor** — the expression the reference event must satisfy
+
+Zeal scans all entries for events matching `anchor`, collects their timestamps, then returns only the entries matching `condition` that fall within `±duration` of any anchor event.
+
+## Duration units
+
+| Unit | Meaning | Example |
+|---|---|---|
+| `ms` | Milliseconds | `500ms` |
+| `s` | Seconds | `5s` |
+| `m` | Minutes | `1m` |
+| `h` | Hours | `2h` |
+| `d` | Days | `1d` |
+
+## Examples
+
+```bash
+# Errors within 5 seconds of a warning
+zeal 'FROM app.json WHERE level = "error" WITHIN 5s OF level = "warn"'
+
+# Timeouts after a deployment
+zeal 'FROM app.json WHERE message CONTAINS "timeout" WITHIN 1m OF message CONTAINS "deployed"'
+
+# DB errors near high latency
+zeal 'FROM app.json WHERE message CONTAINS "db error" WITHIN 2s OF latency_ms >= 1000'
+```
+
+## Performance
+
+Zeal sorts the anchor timestamps and uses binary search to check proximity for each candidate entry. This gives **O(n log m)** performance, where `n` is the number of condition matches and `m` is the number of anchor events.
+
+<Warning>
+Temporal correlation requires log entries to have a parseable timestamp field. Zeal recognises `timestamp`, `ts`, `time`, and `@timestamp` automatically. Entries without a timestamp are included only as a best-effort fallback (when at least one anchor event exists).
+</Warning>
+
+## Supported timestamp formats
+
+Zeal parses ISO 8601 timestamps, with and without timezone offsets:
+
+```
+2024-01-15T10:30:00Z
+2024-01-15T10:30:00.123Z
+2024-01-15 10:30:00
+2024-01-15T10:30:00+05:30
+```
+
+## Combining with GROUP BY
+
+<Tip>
+Pair `WITHIN...OF` with `GROUP BY` to see which request IDs, services, or users were affected when errors followed warnings.
+
+```bash
+zeal 'FROM app.json WHERE level = "error" WITHIN 5s OF level = "warn" GROUP BY request_id'
+```
+</Tip>

@@ -1,0 +1,89 @@
+---
+title: "Operators"
+description: "All comparison and logical operators supported in WHERE expressions."
+---
+
+## Comparison operators
+
+| Operator | Example | Description |
+|---|---|---|
+| `=` | `level = "error"` | Exact match (case-insensitive for strings) |
+| `!=` | `level != "debug"` | Not equal |
+| `>` | `status > 499` | Greater than |
+| `<` | `latency_ms < 100` | Less than |
+| `>=` | `status >= 500` | Greater than or equal |
+| `<=` | `latency_ms <= 200` | Less than or equal |
+| `CONTAINS` | `message CONTAINS "timeout"` | Case-insensitive substring search |
+| `MATCHES` | `message MATCHES "err.*"` | Regex match |
+
+Numeric comparisons work on integer and float fields. String comparisons are always case-insensitive.
+
+```bash
+# Exact string match (case-insensitive)
+zeal 'FROM app.json WHERE level = "error"'
+
+# Not equal
+zeal 'FROM app.json WHERE level != "debug"'
+
+# Numeric range
+zeal 'FROM app.json WHERE status >= 500'
+zeal 'FROM app.json WHERE latency_ms < 100'
+
+# Substring search (case-insensitive)
+zeal 'FROM app.json WHERE message CONTAINS "timeout"'
+
+# Regex match
+zeal 'FROM app.json WHERE message MATCHES "err.*"'
+```
+
+## Boolean logic
+
+Use `AND`, `OR`, and `NOT` to combine expressions.
+
+### AND
+
+Both sides must match:
+
+```bash
+zeal 'FROM app.json WHERE level = "error" AND status >= 500'
+```
+
+### OR
+
+Either side must match:
+
+```bash
+zeal 'FROM app.json WHERE level = "error" OR level = "fatal"'
+```
+
+### NOT
+
+Inverts a condition:
+
+```bash
+zeal 'FROM app.json WHERE NOT level = "debug"'
+```
+
+## Parenthesized expressions
+
+Use parentheses to control precedence. `AND` binds more tightly than `OR`, so parentheses are required when mixing the two:
+
+```bash
+# Without parentheses, AND is evaluated first:
+# level = "error" AND (status >= 500 OR service = "auth")
+zeal 'FROM app.json WHERE level = "error" AND status >= 500 OR service = "auth"'
+
+# Parentheses make the intent explicit:
+zeal 'FROM app.json WHERE (level = "error" OR level = "fatal") AND status >= 500'
+```
+
+## Operator precedence
+
+From highest to lowest:
+
+1. `NOT`
+2. `AND`
+3. `OR`
+4. `WITHIN...OF` (temporal — see [Temporal correlation](/query-language/temporal-correlation))
+
+When in doubt, use parentheses.

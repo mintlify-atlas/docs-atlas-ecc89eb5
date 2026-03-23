@@ -1,0 +1,116 @@
+---
+title: "Query syntax"
+description: "The full grammar for Zeal's SQL-like query language."
+---
+
+Every Zeal query follows this structure:
+
+```
+FROM <source>, ...
+[WHERE <expression>]
+[GROUP BY <field>, ...]
+[SHOW FIRST|LAST <n> | SHOW COUNT]
+```
+
+Only `FROM` is required. The other clauses are optional and must appear in the order shown.
+
+## FROM
+
+`FROM` tells Zeal which log file (or files) to read. You can specify a relative path, an absolute path, or the special keyword `stdin`.
+
+```bash
+# Relative path
+zeal 'FROM app.json WHERE level = "error"'
+
+# Absolute path
+zeal 'FROM /var/log/app.json WHERE level = "error"'
+
+# Multiple sources — comma-separated
+zeal 'FROM /var/log/app.log, /var/log/nginx.log WHERE status >= 500'
+
+# Read from stdin
+zeal 'FROM stdin WHERE level = "error"'
+```
+
+As an alternative to `FROM`, you can pass files with the `-f` flag and omit the clause entirely:
+
+```bash
+zeal -f app.json -f nginx.log 'WHERE status >= 500'
+```
+
+Zeal auto-detects the format (JSON, logfmt, or plain text) from the first line of each file. No flag is required.
+
+## WHERE
+
+`WHERE` filters log entries using an expression. Only entries that match the expression are returned.
+
+```bash
+# Exact field match
+zeal 'FROM app.json WHERE level = "error"'
+
+# Numeric comparison
+zeal 'FROM app.json WHERE status >= 500'
+
+# Substring search
+zeal 'FROM app.json WHERE message CONTAINS "timeout"'
+
+# Boolean logic
+zeal 'FROM app.json WHERE level = "error" AND status >= 500'
+```
+
+See [Operators](/query-language/operators) for the full list of comparison and logical operators.
+
+<Note>
+The `WITHIN...OF` temporal syntax also appears inside a `WHERE` clause. See [Temporal correlation](/query-language/temporal-correlation) for details.
+</Note>
+
+## GROUP BY
+
+`GROUP BY` groups matching entries by the value of one or more fields. Results are printed per group.
+
+```bash
+# Group errors by request ID
+zeal 'FROM app.json WHERE level = "error" GROUP BY request_id'
+
+# Group by multiple fields
+zeal 'FROM app.json WHERE level = "error" GROUP BY service, region'
+
+# Group by a nested field
+zeal 'FROM app.json WHERE level = "error" GROUP BY request.method'
+```
+
+Entries whose group field is missing are collected under `(none)`.
+
+## SHOW
+
+`SHOW` controls how many results are returned and in what form.
+
+### SHOW FIRST / SHOW LAST
+
+Limit output to the first or last `n` matching entries:
+
+```bash
+# First 5 matches
+zeal 'FROM app.json WHERE level = "error" SHOW FIRST 5'
+
+# Last 10 matches
+zeal 'FROM app.json WHERE status >= 500 SHOW LAST 10'
+```
+
+### SHOW COUNT
+
+Print the total number of matching entries instead of the entries themselves:
+
+```bash
+zeal 'FROM app.json WHERE level = "error" SHOW COUNT'
+```
+
+This is useful for dashboards, alerts, or quick sanity checks.
+
+### SHOW with GROUP BY
+
+When `GROUP BY` is present, `SHOW COUNT` returns a count per group:
+
+```bash
+zeal 'FROM app.json WHERE level = "error" GROUP BY service SHOW COUNT'
+```

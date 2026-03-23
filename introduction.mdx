@@ -1,0 +1,80 @@
+---
+title: "Introduction"
+description: "Zeal is a structured log query language — like jq, but for logs. A single static binary that queries JSON, logfmt, and plain text log files."
+---
+
+Zeal lets you query log files with a SQL-like language. It ships as a single static binary with no dependencies, auto-detects your log format, and gives you temporal correlation that no other tool offers.
+
+```bash
+# Find all errors instantly
+zeal 'FROM /var/log/app.json WHERE level = "error"'
+
+# The killer feature: find errors within 5s of a warning
+zeal 'FROM /var/log/app.json WHERE level = "error" WITHIN 5s OF level = "warn"'
+```
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get the single static binary running on Linux or macOS in under a minute.
+  </Card>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Write your first query and filter logs in seconds.
+  </Card>
+</CardGroup>
+
+## Why Zeal?
+
+Existing tools each solve part of the problem, but none covers all of it:
+
+- **`grep`** matches text but can't filter by field values, compare numbers, or correlate events across time.
+- **`jq`** is powerful for JSON but can't handle logfmt or plain text, and has no temporal logic.
+- **`zeal`** gives you a single consistent query language across all log formats — plus temporal correlation that neither tool can do.
+
+| Capability | grep | jq | zeal |
+|---|---|---|---|
+| Filter by field value | — | JSON only | JSON, logfmt, plain text |
+| Numeric comparisons (`>= 500`) | — | JSON only | All formats |
+| Substring search | With regex | With `test()` | `CONTAINS` (case-insensitive) |
+| logfmt support | Text only | — | Native |
+| Plain text support | Native | — | Native |
+| Temporal correlation | — | — | `WITHIN 5s OF` |
+| Aggregate / group | — | With reduce | `GROUP BY` |
+| Follow mode | — | — | `--follow` |
+
+## Core concepts
+
+### Query language
+
+Zeal uses a SQL-inspired syntax with four clauses:
+
+```
+FROM <source>, ...
+[WHERE <expression>]
+[GROUP BY <field>, ...]
+[SHOW FIRST|LAST <n> | SHOW COUNT]
+```
+
+You write queries as a single quoted string. The `FROM` clause names the log file (or files). `WHERE` filters entries using operators like `=`, `>=`, `CONTAINS`, and boolean logic.
+
+### Temporal correlation
+
+The standout feature. The `WITHIN ... OF` clause lets you find log entries that occurred near other entries in time:
+
+```bash
+# Errors that appeared within 5 seconds of a warning
+zeal 'FROM app.json WHERE level = "error" WITHIN 5s OF level = "warn"'
+```
+
+Zeal uses binary search on sorted timestamps, giving O(n log m) performance. Duration units are `ms`, `s`, `m`, `h`, and `d`.
+
+### Auto-detection
+
+Zeal reads the first line of each file to detect the format — no flags required:
+
+| Format | Detection rule | Example |
+|---|---|---|
+| **JSON** | First line starts with `{` | `{"level":"error","msg":"timeout"}` |
+| **logfmt** | First line contains `key=value` pairs | `level=error msg="timeout"` |
+| **Plain text** | Everything else | `2024-01-15 10:30:06 ERROR timeout` |
+
+Common field aliases (`level`/`lvl`/`severity`, `message`/`msg`, `timestamp`/`ts`/`time`) are mapped automatically across formats.

@@ -1,0 +1,68 @@
+---
+title: "Piping and composition"
+description: "Combine Zeal with jq, awk, sort, and other Unix tools for powerful log analysis."
+---
+
+Zeal is designed to compose with standard Unix tools. Use `--format json` to produce structured NDJSON output that any tool consuming JSON can process, or `--format raw` when downstream tools expect the original log lines.
+
+## Pipe to jq for post-processing
+
+`--format json` outputs one JSON object per matching entry (NDJSON). Pass this to `jq` to extract fields, reshape output, or apply additional filters.
+
+```bash
+# Extract a single field
+zeal --format json 'FROM app.json WHERE level = "error"' | jq '.request_id'
+
+# Filter further with jq
+zeal --format json 'FROM app.json WHERE level = "error"' | jq 'select(.status >= 500)'
+```
+
+Zeal handles the log parsing and field filtering; `jq` handles any post-processing that doesn't need Zeal's query language.
+
+## Count unique values
+
+Combine `jq`, `sort`, and standard Unix utilities to count distinct values across matching entries.
+
+```bash
+# Count unique request IDs with errors
+zeal --format json 'FROM app.json WHERE level = "error"' | jq -r '.request_id' | sort -u | wc -l
+```
+
+`-r` outputs raw strings (no JSON quoting), `sort -u` deduplicates, and `wc -l` counts the result.
+
+## Pretty-print with bat
+
+Use [bat](https://github.com/sharkdp/bat) to syntax-highlight JSON output in the terminal.
+
+```bash
+zeal --format json 'FROM app.json WHERE level = "error"' | bat -l json
+```
+
+This is useful when reviewing error details interactively — `bat` adds line numbers and syntax colouring on top of Zeal's filtering.
+
+## Feed into alerting
+
+Pipe `--follow` output directly into a loop that writes to an alert log or triggers a notification.
+
+```bash
+zeal --follow --format json 'FROM /var/log/app.json WHERE level = "fatal"' | \
+  while read -r line; do
+    echo "FATAL ERROR: $line" >> /var/log/alerts.log
+  done
+```
+
+See [Monitoring and scripting](/examples/monitoring-scripting) for webhook and email alerting examples.
+
+## Choosing the right format for piping
+
+<Tip>
+Use `--format json` when feeding output to tools that consume structured data — `jq`, Python scripts, alerting pipelines, and so on. Each line is a self-contained JSON object that's easy to parse.
+
+Use `--format raw` when feeding matched lines to tools that expect the original log format, such as other log processors or custom parsers.
+</Tip>
+
+| Format | Use when |
+|---|---|
+| `--format json` | Downstream tool consumes JSON (`jq`, scripts, webhooks) |
+| `--format raw` | Downstream tool expects original log lines |
+| `--format text` | Interactive terminal use only — not suitable for piping |

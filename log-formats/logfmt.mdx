@@ -1,0 +1,47 @@
+---
+title: "logfmt logs"
+description: "Query logfmt-formatted logs — the key=value format used by Go apps and Heroku."
+---
+
+logfmt is a line-oriented format where each field is written as `key=value` or `key="quoted value"`. It is the default output format of the Go `log/slog` package, Heroku's router, and many other services.
+
+## Detection
+
+A file is parsed as logfmt when the first non-empty line contains at least two `key=value` pairs and does not start with `{`.
+
+## Example log line
+
+```
+ts=2024-01-15T10:30:06Z level=error msg="Connection timeout" request_id=abc123 status=500
+```
+
+## Query examples
+
+```bash
+zeal 'FROM app.logfmt WHERE level = "error"'
+zeal 'FROM app.logfmt WHERE status >= 500'
+zeal 'FROM app.logfmt WHERE msg CONTAINS "timeout"'
+```
+
+Because `msg` and `lvl` are auto-mapped, you can also write:
+
+```bash
+zeal 'FROM app.logfmt WHERE level = "error"'
+zeal 'FROM app.logfmt WHERE message CONTAINS "timeout"'
+```
+
+Both queries match the `msg` and `level` fields regardless of which alias your app uses.
+
+## Field mapping
+
+The following aliases are normalized automatically:
+
+| Canonical field | Recognized aliases |
+|---|---|
+| `level` | `lvl`, `severity`, `log_level`, `loglevel` |
+| `message` | `msg`, `text`, `body` |
+| `timestamp` | `ts`, `time`, `t`, `@timestamp`, `datetime`, `date` |
+
+## Limitations
+
+logfmt fields are always flat. There is no nested structure, so dot-notation field access (e.g., `request.headers.host`) is not supported. If you need nested fields, use JSON format.

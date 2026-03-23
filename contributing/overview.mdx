@@ -1,0 +1,62 @@
+---
+title: "Contributing"
+description: "How to contribute to Zeal — bug reports, feature requests, and pull requests."
+---
+
+Zeal is a small, focused tool and every contribution matters. Whether you're reporting a bug, proposing a feature, or submitting a pull request, this page explains how to do it well.
+
+## Bug reports
+
+Open an issue on [GitHub](https://github.com/aryanjha256/zeal/issues) and include:
+
+- What you ran — the full command and a sample of the input
+- What you expected to happen
+- What happened instead (paste the full output or error message)
+- Your Zig version (`zig version`)
+
+The more specific the report, the faster it can be fixed. A minimal reproducing input that triggers the bug is especially helpful.
+
+## Feature requests
+
+Open an issue describing the use case. Concrete examples — actual query strings and log lines — make it much easier to evaluate whether the feature fits Zeal's scope and how it should behave.
+
+## Pull requests
+
+<Steps>
+  <Step title="Fork and create a branch">
+    Fork the repository and create a branch from `main`.
+  </Step>
+  <Step title="Make your change">
+    Implement your fix or feature. Every `.zig` source file has `test` blocks at the bottom — use them as a guide.
+  </Step>
+  <Step title="Add or update tests">
+    Run `zig build test` and make sure all tests pass. Add new tests for any new behaviour.
+  </Step>
+  <Step title="Format the code">
+    Run `zig fmt src/` before committing. Formatting is enforced in CI and unformatted code will fail the check.
+  </Step>
+  <Step title="Open a pull request">
+    Push your branch and open a PR with a clear description of what the change does and why.
+  </Step>
+</Steps>
+
+## Code style guidelines
+
+- **Formatting**: Follow `zig fmt` output exactly — this is enforced by CI.
+- **Doc comments**: Use `///` on all public declarations.
+- **Function design**: Keep functions short and composable.
+- **Memory**: Prefer zero-copy slices over allocations wherever possible.
+- **Tests**: Cover edge cases — empty input, missing fields, and malformed data are all worth testing.
+
+## Commit message conventions
+
+Use conventional-style prefixes to make the history easy to scan:
+
+```
+fix: handle empty JSON objects in log_parser
+feat: add MATCHES operator with regex support
+test: add timezone offset parsing tests
+docs: update README with new examples
+```
+
+By contributing, you agree that your changes will be licensed under the [MIT License](https://github.com/aryanjha256/zeal/blob/main/LICENSE).

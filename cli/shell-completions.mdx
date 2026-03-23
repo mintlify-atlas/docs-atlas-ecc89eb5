@@ -1,0 +1,54 @@
+---
+title: "Shell completions"
+description: "Set up tab completion for Zeal in bash, zsh, or fish."
+---
+
+Zeal ships completion scripts for bash, zsh, and fish. The files are bundled with every release and are also available in the source repository under `completions/`.
+
+## Install
+
+<Tabs>
+  <Tab title="Bash">
+    ```bash
+    sudo cp completions/zeal.bash /etc/bash_completion.d/zeal
+    ```
+
+    Reload your shell or source the file to activate immediately:
+
+    ```bash
+    source ~/.bashrc
+    ```
+  </Tab>
+
+  <Tab title="Zsh">
+    ```bash
+    sudo cp completions/zeal.zsh /usr/local/share/zsh/site-functions/_zeal
+    ```
+
+    Reload your shell or source your config to activate:
+
+    ```bash
+    source ~/.zshrc
+    ```
+  </Tab>
+
+  <Tab title="Fish">
+    ```bash
+    cp completions/zeal.fish ~/.config/fish/completions/
+    ```
+
+    Fish picks up completions automatically — no extra step required.
+  </Tab>
+</Tabs>
+
+## Getting the completion files
+
+If you installed Zeal from a pre-built binary rather than from source, you have two options:
+
+- Download the release archive from the [Releases page](https://github.com/aryanjha256/zeal/releases) — it includes the `completions/` directory.
+- Clone the repository to get just the completion files:
+
+  ```bash
+  git clone https://github.com/aryanjha256/zeal.git
+  # Then copy from zeal/completions/
+  ```

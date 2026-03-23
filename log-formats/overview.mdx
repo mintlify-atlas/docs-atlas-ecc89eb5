@@ -1,0 +1,42 @@
+---
+title: "Log format overview"
+description: "Zeal automatically detects JSON, logfmt, and plain text log formats from the first line of your file."
+---
+
+Zeal reads the first line of your log file and infers the format — no flags or configuration required. The same query syntax works identically across all formats.
+
+## Detection rules
+
+| Format | Detection | Example |
+|---|---|---|
+| JSON | Starts with `{` | `{"level":"error","message":"timeout"}` |
+| logfmt | `key=value` pairs | `level=error msg="timeout" req=abc` |
+| Plain text | Everything else | `2024-01-15 10:30:06 ERROR timeout` |
+
+Detection runs once on the first non-empty line. Every subsequent line in the file is parsed with the same format.
+
+## Auto-mapped fields
+
+Several common field name variations are normalized automatically so that standard filters like `level = "error"` work regardless of how the field was named in your logs.
+
+| Canonical field | Recognized aliases |
+|---|---|
+| `level` | `lvl`, `severity`, `log_level`, `loglevel` |
+| `message` | `msg`, `text`, `body` |
+| `timestamp` | `ts`, `time`, `t`, `@timestamp`, `datetime`, `date` |
+
+For example, a Go app that writes `lvl=warn` and a Java app that writes `severity=WARN` both match `WHERE level = "warn"`.
+
+## Format pages
+
+<Columns cols={3}>
+  <Card title="JSON" icon="braces" href="/log-formats/json">
+    Structured JSON logs with full field access and numeric comparisons.
+  </Card>
+  <Card title="logfmt" icon="equals" href="/log-formats/logfmt">
+    Key-value format used by Go apps, Heroku, and many cloud services.
+  </Card>
+  <Card title="Plain text" icon="align-left" href="/log-formats/plain-text">
+    Syslog, Apache access logs, and any other line-based format.
+  </Card>
+</Columns>
