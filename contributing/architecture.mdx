@@ -13,7 +13,7 @@ Zeal is structured as a pipeline: a query string and a log file go in, filtered 
 | `src/parser.zig` | Recursive-descent parser → AST |
 | `src/ast.zig` | AST node types |
 | `src/log_reader.zig` | File reader + line iterator |
-| `src/log_parser.zig` | Format auto-detection (JSON / logfmt / plain) |
+| `src/log_parser.zig` | Format auto-detection (JSON / logfmt / syslog / plain) |
 | `src/evaluator.zig` | WHERE expression evaluator |
 | `src/temporal.zig` | Temporal correlation + GROUP BY |
 | `src/cli.zig` | CLI argument parser |
@@ -37,7 +37,7 @@ Zeal is structured as a pipeline: a query string and a log file go in, filtered 
     `log_reader.zig` opens the file and exposes a line iterator. Lines are yielded one at a time, keeping memory usage low regardless of file size.
   </Step>
   <Step title="Parse log entries (log_parser.zig)">
-    `log_parser.zig` inspects the first line to auto-detect the format (JSON, logfmt, or plain text) and then parses each subsequent line into a set of key–value fields.
+    `log_parser.zig` inspects the first line to auto-detect the format (JSON, logfmt, syslog, or plain text) and then parses each subsequent line into a set of key–value fields.
   </Step>
   <Step title="Evaluate WHERE (evaluator.zig)">
     `evaluator.zig` walks the WHERE sub-tree of the AST and tests each parsed entry against the filter expression. Entries that do not match are discarded.

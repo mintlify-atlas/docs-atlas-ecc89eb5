@@ -1,6 +1,6 @@
 ---
 title: "Log format overview"
-description: "Zeal automatically detects JSON, logfmt, and plain text log formats from the first line of your file."
+description: "Zeal automatically detects JSON, logfmt, syslog, and plain text log formats from the first line of your file."
 ---
 
 Zeal reads the first line of your log file and infers the format — no flags or configuration required. The same query syntax works identically across all formats.
@@ -9,8 +9,9 @@ Zeal reads the first line of your log file and infers the format — no flags or
 
 | Format | Detection | Example |
 |---|---|---|
-| JSON | Starts with `{` | `{"level":"error","message":"timeout"}` |
-| logfmt | `key=value` pairs | `level=error msg="timeout" req=abc` |
+| JSON | First line starts with `{` | `{"level":"error","message":"timeout"}` |
+| logfmt | First line has ≥2 `key=value` pairs | `level=error msg="timeout" req=abc` |
+| syslog | First line starts with a month abbreviation (`Jan`) or `<priority>` tag | `Jan 15 10:30:00 myhost myapp[1234]: error` |
 | Plain text | Everything else | `2024-01-15 10:30:06 ERROR timeout` |
 
 Detection runs once on the first non-empty line. Every subsequent line in the file is parsed with the same format.
@@ -24,12 +25,13 @@ Several common field name variations are normalized automatically so that standa
 | `level` | `lvl`, `severity`, `log_level`, `loglevel` |
 | `message` | `msg`, `text`, `body` |
 | `timestamp` | `ts`, `time`, `t`, `@timestamp`, `datetime`, `date` |
+| `raw` / `line` | The original unparsed log line |
 
 For example, a Go app that writes `lvl=warn` and a Java app that writes `severity=WARN` both match `WHERE level = "warn"`.
 
 ## Format pages
 
-<Columns cols={3}>
+<CardGroup cols={3}>
   <Card title="JSON" icon="braces" href="/log-formats/json">
     Structured JSON logs with full field access and numeric comparisons.
   </Card>
@@ -39,4 +41,4 @@ For example, a Go app that writes `lvl=warn` and a Java app that writes `severit
   <Card title="Plain text" icon="align-left" href="/log-formats/plain-text">
     Syslog, Apache access logs, and any other line-based format.
   </Card>
-</Columns>
+</CardGroup>

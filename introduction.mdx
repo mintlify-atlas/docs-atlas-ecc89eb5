@@ -77,4 +77,4 @@ Zeal reads the first line of each file to detect the format — no flags require
 | **logfmt** | First line contains `key=value` pairs | `level=error msg="timeout"` |
 | **Plain text** | Everything else | `2024-01-15 10:30:06 ERROR timeout` |
 
-Common field aliases (`level`/`lvl`/`severity`, `message`/`msg`, `timestamp`/`ts`/`time`) are mapped automatically across formats.
+Common field aliases (`level`/`lvl`/`severity`/`log_level`, `message`/`msg`/`text`/`body`, `timestamp`/`ts`/`time`/`t`/`@timestamp`/`datetime`/`date`) are mapped automatically across formats.

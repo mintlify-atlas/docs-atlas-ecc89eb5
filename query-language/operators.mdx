@@ -14,9 +14,13 @@ description: "All comparison and logical operators supported in WHERE expression
 | `>=` | `status >= 500` | Greater than or equal |
 | `<=` | `latency_ms <= 200` | Less than or equal |
 | `CONTAINS` | `message CONTAINS "timeout"` | Case-insensitive substring search |
-| `MATCHES` | `message MATCHES "err.*"` | Regex match |
+| `MATCHES` | `message MATCHES "timeout"` | Case-insensitive substring match (same behavior as `CONTAINS`) |
 
 Numeric comparisons work on integer and float fields. String comparisons are always case-insensitive.
+
+<Note>
+`MATCHES` is currently implemented as a case-insensitive substring search, identical to `CONTAINS`. Regex support is planned for a future release.
+</Note>
 
 ```bash
 # Exact string match (case-insensitive)
@@ -32,8 +36,8 @@ zeal 'FROM app.json WHERE latency_ms < 100'
 # Substring search (case-insensitive)
 zeal 'FROM app.json WHERE message CONTAINS "timeout"'
 
-# Regex match
-zeal 'FROM app.json WHERE message MATCHES "err.*"'
+# Substring match (same behavior as CONTAINS)
+zeal 'FROM app.json WHERE message MATCHES "timeout"'
 ```
 
 ## Boolean logic
@@ -87,3 +91,18 @@ From highest to lowest:
 4. `WITHIN...OF` (temporal — see [Temporal correlation](/query-language/temporal-correlation))
 
 When in doubt, use parentheses.
+
+## Level values
+
+When filtering on `level`, Zeal normalizes these aliases automatically:
+
+| Canonical level | Recognized values |
+|---|---|
+| `trace` | `trace` |
+| `debug` | `debug`, `dbg` |
+| `info` | `info`, `information` |
+| `warn` | `warn`, `warning` |
+| `error` | `error`, `err` |
+| `fatal` | `fatal`, `critical`, `crit`, `panic`, `emerg` |
+
+All comparisons are case-insensitive, so `level = "ERROR"` and `level = "error"` produce identical results.

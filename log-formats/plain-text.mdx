@@ -7,9 +7,12 @@ Plain text is the fallback format for any file that does not look like JSON or l
 
 ## Detection
 
-A file is parsed as plain text when the first non-empty line does not start with `{` and does not contain at least two `key=value` pairs.
+Zeal recognizes two related formats for unstructured logs:
 
-Syslog lines that begin with a month abbreviation (e.g., `Jan`) or an RFC 5424 priority tag (e.g., `<13>`) are recognized as a syslog variant and receive the same plain-text treatment.
+- **syslog** — detected when the first line starts with a month abbreviation (RFC 3164: `Jan 15 10:30:00 ...`) or an RFC 5424 priority tag (`<13>...`). Zeal uses a dedicated syslog parser internally.
+- **plain text** — the fallback for everything else that isn't JSON, logfmt, or syslog.
+
+Both formats use the same query syntax and field detection heuristics.
 
 ## Example log lines
 

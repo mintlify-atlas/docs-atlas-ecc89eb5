@@ -9,7 +9,7 @@ Every Zeal query follows this structure:
 FROM <source>, ...
 [WHERE <expression>]
 [GROUP BY <field>, ...]
-[SHOW FIRST|LAST <n> | SHOW COUNT]
+[SHOW FIRST|LAST <n> | SHOW COUNT | SHOW <field>, ...]
 ```
 
 Only `FROM` is required. The other clauses are optional and must appear in the order shown.
@@ -28,9 +28,11 @@ zeal 'FROM /var/log/app.json WHERE level = "error"'
 # Multiple sources — comma-separated
 zeal 'FROM /var/log/app.log, /var/log/nginx.log WHERE status >= 500'
 
-# Read from stdin
-zeal 'FROM stdin WHERE level = "error"'
 ```
+
+<Note>
+`FROM stdin` is recognized by the parser but stdin reading is not yet implemented in v0.1.0. Use file paths or the `-f` flag instead.
+</Note>
 
 As an alternative to `FROM`, you can pass files with the `-f` flag and omit the clause entirely:
 
@@ -38,7 +40,7 @@ As an alternative to `FROM`, you can pass files with the `-f` flag and omit the 
 zeal -f app.json -f nginx.log 'WHERE status >= 500'
 ```
 
-Zeal auto-detects the format (JSON, logfmt, or plain text) from the first line of each file. No flag is required.
+Zeal auto-detects the format (JSON, logfmt, syslog, or plain text) from the first line of each file. No flag is required.
 
 ## WHERE
 
@@ -106,6 +108,14 @@ zeal 'FROM app.json WHERE level = "error" SHOW COUNT'
 ```
 
 This is useful for dashboards, alerts, or quick sanity checks.
+
+### SHOW fields
+
+You can also provide a list of field names to `SHOW` to select which fields appear in the output:
+
+```bash
+zeal 'FROM app.json WHERE level = "error" SHOW level, message, request_id'
+```
 
 ### SHOW with GROUP BY
 

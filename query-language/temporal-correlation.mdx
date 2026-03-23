@@ -47,7 +47,7 @@ zeal 'FROM app.json WHERE message CONTAINS "db error" WITHIN 2s OF latency_ms >=
 Zeal sorts the anchor timestamps and uses binary search to check proximity for each candidate entry. This gives **O(n log m)** performance, where `n` is the number of condition matches and `m` is the number of anchor events.
 
 <Warning>
-Temporal correlation requires log entries to have a parseable timestamp field. Zeal recognises `timestamp`, `ts`, `time`, and `@timestamp` automatically. Entries without a timestamp are included only as a best-effort fallback (when at least one anchor event exists).
+Temporal correlation requires log entries to have a parseable timestamp field. Zeal recognises `timestamp`, `ts`, `time`, `t`, `@timestamp`, `datetime`, and `date` automatically. Entries without a timestamp are excluded from temporal matching.
 </Warning>
 
 ## Supported timestamp formats
